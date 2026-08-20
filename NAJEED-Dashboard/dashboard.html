@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        NAJEED | Emergency Response Center
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <style>
+
+        .video-container {
+            position: relative;
+        }
+
+        .camera-stage {
+            position: relative;
+
+            width: 100%;
+            min-height: 490px;
+
+            overflow: hidden;
+
+            border: 1px solid #28485a;
+            border-radius: 13px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #03080d,
+                    #071019
+                );
+        }
+
+        .mission-video {
+            position: absolute;
+
+            inset: 0;
+
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+
+            display: none;
+
+            background: #000;
+
+            z-index: 2;
+        }
+
+        .mission-video.active {
+            display: block;
+        }
+
+        .camera-center-content {
+            position: absolute;
+
+            inset: 0;
+
+            z-index: 3;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+
+            pointer-events: none;
+        }
+
+        .camera-grid {
+            z-index: 1;
+        }
+
+        .camera-hud {
+            z-index: 5;
+        }
+
+        .corner {
+            z-index: 6;
+        }
+
+        .video-running .camera-grid {
+            display: none;
+        }
+
+        .video-running .camera-center-content {
+            display: none;
+        }
+
+        .video-running::before {
+            display: none;
+        }
+
+        .hidden-patient-data {
+            display: none !important;
+        }
+
+        .patient-data-visible {
+            animation: revealPatientData 0.55s ease forwards;
+        }
+
+        @keyframes revealPatientData {
+
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+        }
+
+        @media (max-width: 780px) {
+
+            .camera-stage {
+                min-height: 390px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="page-shell">
+
+
+    <!-- ====================================================== -->
+    <!-- HEADER -->
+    <!-- ====================================================== -->
+
+    <header class="main-header">
+
+
+        <div class="brand-area">
+
+
+            <div class="brand-logo">
+
+                <img
+                    src="{{ url_for('static', filename='najeed_logo2.png') }}"
+                    alt="NAJEED Logo"
+                    class="najeed-logo"
+                >
+
+            </div>
+
+
+            <div class="brand-text">
+
+                <p class="eyebrow">
+                    AI-POWERED EMERGENCY RESPONSE SYSTEM
+                </p>
+
+                <span class="brand-subtitle">
+                    Intelligent Drone-Based Emergency Assistance
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+        <div class="header-right">
+
+            <div
+                id="systemStatus"
+                class="system-status online"
+            >
+
+                <span class="status-dot"></span>
+
+                <div>
+
+                    <strong>
+                        SYSTEM ONLINE
+                    </strong>
+
+                    <small>
+                        Emergency Dashboard
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </header>
+
+
+
+    <!-- ====================================================== -->
+    <!-- MAIN DASHBOARD -->
+    <!-- ====================================================== -->
+
+    <main class="dashboard-grid">
+
+
+        <!-- ================================================== -->
+        <!-- LEFT COLUMN -->
+        <!-- ================================================== -->
+
+        <section class="left-column">
+
+
+            <!-- DRONE VIDEO FEED -->
+
+            <article class="panel camera-panel">
+
+
+                <div class="panel-heading">
+
+
+                    <div class="heading-left">
+
+                        <span class="heading-icon">
+                            ◉
+                        </span>
+
+                        DRONE VIDEO FEED
+
+                    </div>
+
+
+                    <div
+                        id="cameraStatus"
+                        class="live-status"
+                    >
+
+                        <span></span>
+
+                        READY
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="video-container">
+
+
+                    <div
+                        id="cameraStage"
+                        class="camera-stage"
+                    >
+
+
+                        <div class="camera-grid"></div>
+
+
+
+                        <!-- VIDEO -->
+
+                        <video
+                            id="missionVideo"
+                            class="mission-video"
+                            muted
+                            playsinline
+                            preload="auto"
+                        >
+                            Your browser does not support video playback.
+                        </video>
+
+
+
+                        <!-- PLACEHOLDER -->
+
+                        <div
+                            id="cameraPlaceholder"
+                            class="camera-center-content"
+                        >
+
+                            <div class="scan-icon">
+                                ◎
+                            </div>
+
+                            <h2>
+                                NAJEED VISION SYSTEM
+                            </h2>
+
+                            <p>
+                                Injury detection & patient tracking
+                            </p>
+
+                            <small>
+                                Waiting for mission start
+                            </small>
+
+                        </div>
+
+
+
+                        <!-- CAMERA HUD -->
+
+                        <div
+                            id="hudTopLeft"
+                            class="camera-hud camera-hud-top-left"
+                        >
+                            AI SYSTEM READY
+                        </div>
+
+
+                        <div
+                            class="camera-hud camera-hud-top-right"
+                        >
+                            CAM 01
+                        </div>
+
+
+                        <div
+                            id="patientsHud"
+                            class="camera-hud camera-hud-bottom-left"
+                        >
+                            WAITING FOR SCAN
+                        </div>
+
+
+                        <div
+                            id="analysisHud"
+                            class="camera-hud camera-hud-bottom-right"
+                        >
+                            STANDBY
+                        </div>
+
+
+
+                        <!-- CORNERS -->
+
+                        <span class="corner corner-tl"></span>
+
+                        <span class="corner corner-tr"></span>
+
+                        <span class="corner corner-bl"></span>
+
+                        <span class="corner corner-br"></span>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </article>
+
+
+
+            <!-- ================================================== -->
+            <!-- PATIENTS DETECTED -->
+            <!-- ================================================== -->
+
+            <article
+                id="patientsSection"
+                class="panel patient-data-section hidden-patient-data"
+            >
+
+
+                <div class="panel-heading">
+
+
+                    <div class="heading-left">
+                        ✚ PATIENTS DETECTED
+                    </div>
+
+
+                    <div class="patient-count-badge">
+
+                        <span id="patientCount">
+                            2
+                        </span>
+
+                        PATIENTS
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div
+                    id="patientCards"
+                    class="patients-grid"
+                >
+
+
+                    <!-- PATIENT 001 -->
+
+                    <div
+                        class="patient-card selected"
+                        data-patient-id="P-001"
+                    >
+
+                        <div class="patient-avatar">
+                            01
+                        </div>
+
+
+                        <div class="patient-card-info">
+
+                            <strong>
+                                P-001
+                            </strong>
+
+                            <span>
+                                Right Hand
+                            </span>
+
+                            <span
+                                class="small-priority priority-moderate"
+                            >
+                                MODERATE
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- PATIENT 002 -->
+
+                    <div
+                        class="patient-card"
+                        data-patient-id="P-002"
+                    >
+
+                        <div class="patient-avatar">
+                            02
+                        </div>
+
+
+                        <div class="patient-card-info">
+
+                            <strong>
+                                P-002
+                            </strong>
+
+                            <span>
+                                Right Hand
+                            </span>
+
+                            <span
+                                class="small-priority priority-critical"
+                            >
+                                CRITICAL
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+            </article>
+
+
+        </section>
+
+
+
+        <!-- ================================================== -->
+        <!-- RIGHT COLUMN -->
+        <!-- ================================================== -->
+
+        <section class="right-column">
+
+
+            <!-- ================================================== -->
+            <!-- PATIENT ASSESSMENT -->
+            <!-- ================================================== -->
+
+            <article
+                id="assessmentSection"
+                class="panel selected-patient-panel patient-data-section hidden-patient-data"
+            >
+
+
+                <div class="panel-heading">
+
+
+                    <div class="heading-left">
+                        ◇ PATIENT ASSESSMENT
+                    </div>
+
+
+                    <span class="ai-output-badge">
+                        AI OUTPUT
+                    </span>
+
+
+                </div>
+
+
+
+                <div class="selected-patient-header">
+
+
+                    <div>
+
+                        <span class="mini-label">
+                            SELECTED PATIENT
+                        </span>
+
+                        <h2 id="selectedPatientId">
+                            —
+                        </h2>
+
+                    </div>
+
+
+                    <div
+                        id="priorityBadge"
+                        class="priority-badge moderate"
+                    >
+                        MODERATE
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="patient-details">
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            INJURY
+                        </span>
+
+                        <strong id="injuryType">
+                            —
+                        </strong>
+
+                    </div>
+
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            INJURY LOCATION
+                        </span>
+
+                        <strong id="injuryLocation">
+                            —
+                        </strong>
+
+                    </div>
+
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            RESPONSE STATUS
+                        </span>
+
+                        <strong id="responseStatus">
+                            —
+                        </strong>
+
+                    </div>
+
+
+
+                    <div class="detail-card">
+
+
+                        <div class="label-with-tag">
+
+                            <span class="detail-label">
+                                MOVEMENT
+                            </span>
+
+                            <span class="simulated-tag">
+                                SIMULATED
+                            </span>
+
+                        </div>
+
+
+                        <strong id="movementStatus">
+                            —
+                        </strong>
+
+
+                    </div>
+
+
+
+                    <div class="detail-card">
+
+
+                        <div class="label-with-tag">
+
+                            <span class="detail-label">
+                                CONSCIOUSNESS
+                            </span>
+
+                            <span class="simulated-tag">
+                                SIMULATED
+                            </span>
+
+                        </div>
+
+
+                        <strong id="consciousnessStatus">
+                            —
+                        </strong>
+
+
+                    </div>
+
+
+
+                    <div class="detail-card">
+
+                        <span class="detail-label">
+                            BODY REGION
+                        </span>
+
+                        <strong id="bodyRegion">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="medical-note">
+
+                    <span>
+                        !
+                    </span>
+
+                    AI-assisted assessment — not a medical diagnosis.
+
+                </div>
+
+
+            </article>
+
+
+
+            <!-- ================================================== -->
+            <!-- INCIDENT OVERVIEW -->
+            <!-- ================================================== -->
+
+            <article
+                id="overviewSection"
+                class="panel patient-data-section hidden-patient-data"
+            >
+
+
+                <div class="panel-heading">
+
+                    <div class="heading-left">
+                        ▦ INCIDENT OVERVIEW
+                    </div>
+
+                </div>
+
+
+
+                <div class="overview-grid">
+
+
+                    <div class="overview-card">
+
+                        <span class="overview-icon">
+                            ♙
+                        </span>
+
+                        <div>
+
+                            <span>
+                                PATIENTS
+                            </span>
+
+                            <strong id="totalPatients">
+                                2
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="overview-card critical-overview">
+
+                        <span class="overview-icon">
+                            !
+                        </span>
+
+                        <div>
+
+                            <span>
+                                CRITICAL
+                            </span>
+
+                            <strong id="criticalPatients">
+                                1
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="overview-card">
+
+                        <span class="overview-icon">
+                            ◎
+                        </span>
+
+                        <div>
+
+                            <span>
+                                INJURIES
+                            </span>
+
+                            <strong id="injuryCount">
+                                2
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div class="overview-card">
+
+                        <span class="overview-icon">
+                            ○
+                        </span>
+
+                        <div>
+
+                            <span>
+                                UNRESPONSIVE
+                            </span>
+
+                            <strong id="unresponsivePatients">
+                                1
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+            </article>
+
+
+
+            <!-- ================================================== -->
+            <!-- INCIDENT LOCATION -->
+            <!-- ================================================== -->
+
+            <article
+                id="locationSection"
+                class="panel location-panel patient-data-section hidden-patient-data"
+            >
+
+
+                <div class="panel-heading">
+
+
+                    <div class="heading-left">
+                        ⌖ INCIDENT LOCATION
+                    </div>
+
+
+                    <span class="simulated-tag">
+                        SIMULATED GPS
+                    </span>
+
+
+                </div>
+
+
+
+                <div class="coordinates">
+
+
+                    <div>
+
+                        <span>
+                            LATITUDE
+                        </span>
+
+                        <strong id="latitudeValue">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>
+                            LONGITUDE
+                        </span>
+
+                        <strong id="longitudeValue">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div class="mini-map">
+
+
+                    <div class="map-grid"></div>
+
+
+                    <div class="map-ring ring-one"></div>
+
+                    <div class="map-ring ring-two"></div>
+
+                    <div class="map-ring ring-three"></div>
+
+
+                    <div class="map-target">
+
+                        <span></span>
+
+                    </div>
+
+
+                    <div class="map-label">
+                        PATIENT LOCATION
+                    </div>
+
+
+                </div>
+
+
+            </article>
+
+
+
+            <!-- ================================================== -->
+            <!-- MISSION STATUS -->
+            <!-- ================================================== -->
+
+            <article class="panel mission-panel">
+
+
+                <div class="panel-heading">
+
+                    <div class="heading-left">
+                        ◈ MISSION STATUS
+                    </div>
+
+                </div>
+
+
+
+                <div class="mission-content">
+
+
+                    <div>
+
+                        <span class="mini-label">
+                            CURRENT STATE
+                        </span>
+
+                        <strong
+                            id="missionState"
+                            class="mission-state"
+                        >
+                            STANDBY
+                        </strong>
+
+                    </div>
+
+
+                    <div class="mission-symbol">
+                        ✚
+                    </div>
+
+
+                </div>
+
+
+            </article>
+
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- ====================================================== -->
+    <!-- EVENT LOG -->
+    <!-- ====================================================== -->
+
+    <section class="panel event-panel">
+
+
+        <div class="panel-heading">
+
+
+            <div class="heading-left">
+                ▤ EVENT LOG
+            </div>
+
+
+            <button
+                id="clearLogBtn"
+                class="text-button"
+            >
+                CLEAR
+            </button>
+
+
+        </div>
+
+
+
+        <div
+            id="eventLog"
+            class="event-log"
+        >
+        </div>
+
+
+    </section>
+
+
+
+    <!-- ====================================================== -->
+    <!-- CONTROLS -->
+    <!-- ====================================================== -->
+
+    <section class="mission-controls">
+
+
+        <div class="normal-controls">
+
+
+            <button
+                id="connectBtn"
+                class="control-btn connect-btn"
+            >
+                ◉ CONNECT DRONE
+            </button>
+
+
+            <button
+                id="startMissionBtn"
+                class="control-btn"
+            >
+                ▶ START MISSION
+            </button>
+
+
+            <button
+                id="landBtn"
+                class="control-btn"
+            >
+                ↓ LAND / RETURN
+            </button>
+
+
+        </div>
+
+
+
+        <button
+            id="emergencyBtn"
+            class="emergency-btn"
+        >
+            ■ EMERGENCY STOP
+        </button>
+
+
+    </section>
+
+
+
+    <!-- ====================================================== -->
+    <!-- FOOTER -->
+    <!-- ====================================================== -->
+
+    <footer class="site-footer">
+
+
+        <div>
+
+            <span>
+                NAJEED
+            </span>
+
+            <strong>
+                AI Emergency Response System
+            </strong>
+
+        </div>
+
+
+        <div class="footer-center">
+            نَجيد — حين تكون كل ثانية مهمة
+        </div>
+
+
+        <div class="footer-status">
+
+            <span></span>
+
+            SYSTEM READY
+
+        </div>
+
+
+    </footer>
+
+
+</div>
+
+
+
+<!-- ======================================================== -->
+<!-- JAVASCRIPT -->
+<!-- ======================================================== -->
+
+<script>
+
+
+// ============================================================
+// PATIENT DATA
+// ============================================================
+
+const patients = [
+
+    {
+        id: "P-001",
+
+        injuryType: "Visible Wound",
+
+        injuryLocation: "Right Hand",
+
+        bodyRegion: "Right Upper Limb",
+
+        responseStatus: "Needs Attention",
+
+        movement: "Detected",
+
+        consciousness: "Responsive",
+
+        priority: "Moderate",
+
+        latitude: 24.7136,
+
+        longitude: 46.6753
+    },
+
+
+    {
+        id: "P-002",
+
+        injuryType: "Visible Wound",
+
+        injuryLocation: "Right Hand",
+
+        bodyRegion: "Right Upper Limb",
+
+        responseStatus: "Immediate Assistance",
+
+        movement: "Not Detected",
+
+        consciousness: "Unresponsive",
+
+        priority: "Critical",
+
+        latitude: 24.7139,
+
+        longitude: 46.6756
+    }
+
+];
+
+
+
+// ============================================================
+// VIDEOS
+// ============================================================
+
+const missionVideos = [
+
+    "{{ url_for('static', filename='drone_medical_rescue.mp4') }}",
+
+    "{{ url_for('static', filename='drone_medical_rescue_02.mp4') }}"
+
+];
+
+
+
+// ============================================================
+// STATE
+// ============================================================
+
+let selectedPatientId =
+    "P-001";
+
+
+let missionRunning =
+    false;
+
+
+let droneConnected =
+    false;
+
+
+let patientFoundTimer =
+    null;
+
+
+let currentVideoIndex =
+    0;
+
+
+
+// ============================================================
+// DOM ELEMENTS
+// ============================================================
+
+const missionVideo =
+    document.getElementById(
+        "missionVideo"
+    );
+
+
+const cameraStage =
+    document.getElementById(
+        "cameraStage"
+    );
+
+
+const cameraStatus =
+    document.getElementById(
+        "cameraStatus"
+    );
+
+
+const patientsHud =
+    document.getElementById(
+        "patientsHud"
+    );
+
+
+const analysisHud =
+    document.getElementById(
+        "analysisHud"
+    );
+
+
+const hudTopLeft =
+    document.getElementById(
+        "hudTopLeft"
+    );
+
+
+const missionState =
+    document.getElementById(
+        "missionState"
+    );
+
+
+const selectedPatientIdElement =
+    document.getElementById(
+        "selectedPatientId"
+    );
+
+
+const injuryTypeElement =
+    document.getElementById(
+        "injuryType"
+    );
+
+
+const injuryLocationElement =
+    document.getElementById(
+        "injuryLocation"
+    );
+
+
+const responseStatusElement =
+    document.getElementById(
+        "responseStatus"
+    );
+
+
+const movementStatusElement =
+    document.getElementById(
+        "movementStatus"
+    );
+
+
+const consciousnessStatusElement =
+    document.getElementById(
+        "consciousnessStatus"
+    );
+
+
+const bodyRegionElement =
+    document.getElementById(
+        "bodyRegion"
+    );
+
+
+const priorityBadge =
+    document.getElementById(
+        "priorityBadge"
+    );
+
+
+const latitudeValue =
+    document.getElementById(
+        "latitudeValue"
+    );
+
+
+const longitudeValue =
+    document.getElementById(
+        "longitudeValue"
+    );
+
+
+const eventLog =
+    document.getElementById(
+        "eventLog"
+    );
+
+
+const connectBtn =
+    document.getElementById(
+        "connectBtn"
+    );
+
+
+const startMissionBtn =
+    document.getElementById(
+        "startMissionBtn"
+    );
+
+
+const landBtn =
+    document.getElementById(
+        "landBtn"
+    );
+
+
+const emergencyBtn =
+    document.getElementById(
+        "emergencyBtn"
+    );
+
+
+const clearLogBtn =
+    document.getElementById(
+        "clearLogBtn"
+    );
+
+
+const patientsSection =
+    document.getElementById(
+        "patientsSection"
+    );
+
+
+const assessmentSection =
+    document.getElementById(
+        "assessmentSection"
+    );
+
+
+const overviewSection =
+    document.getElementById(
+        "overviewSection"
+    );
+
+
+const locationSection =
+    document.getElementById(
+        "locationSection"
+    );
+
+
+
+// ============================================================
+// LOG
+// ============================================================
+
+function addLog(message) {
+
+    const now =
+        new Date();
+
+
+    const time =
+        now.toLocaleTimeString(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            }
+        );
+
+
+    const item =
+        document.createElement(
+            "div"
+        );
+
+
+    item.className =
+        "log-item";
+
+
+    item.innerHTML = `
+
+        <span class="log-time">
+            ${time}
+        </span>
+
+        <span class="log-dot"></span>
+
+        <span class="log-message">
+            ${message}
+        </span>
+
+    `;
+
+
+    eventLog.prepend(
+        item
+    );
+
+}
+
+
+
+// ============================================================
+// HIDE PATIENT DATA
+// ============================================================
+
+function hidePatientData() {
+
+    [
+        patientsSection,
+        assessmentSection,
+        overviewSection,
+        locationSection
+    ]
+    .forEach(
+        section => {
+
+            if (!section) {
+                return;
+            }
+
+
+            section.classList.remove(
+                "patient-data-visible"
+            );
+
+
+            section.classList.add(
+                "hidden-patient-data"
+            );
+
+        }
+    );
+
+}
+
+
+
+// ============================================================
+// SHOW PATIENT DATA
+// ============================================================
+
+function showPatientData() {
+
+    [
+        patientsSection,
+        assessmentSection,
+        overviewSection,
+        locationSection
+    ]
+    .forEach(
+        section => {
+
+            if (!section) {
+                return;
+            }
+
+
+            section.classList.remove(
+                "hidden-patient-data"
+            );
+
+
+            section.classList.add(
+                "patient-data-visible"
+            );
+
+        }
+    );
+
+}
+
+
+
+// ============================================================
+// PATIENT SELECTION
+// ============================================================
+
+function selectPatient(patientId) {
+
+    const patient =
+        patients.find(
+            p =>
+                p.id === patientId
+        );
+
+
+    if (!patient) {
+        return;
+    }
+
+
+    selectedPatientId =
+        patientId;
+
+
+    selectedPatientIdElement.textContent =
+        patient.id;
+
+
+    injuryTypeElement.textContent =
+        patient.injuryType;
+
+
+    injuryLocationElement.textContent =
+        patient.injuryLocation;
+
+
+    responseStatusElement.textContent =
+        patient.responseStatus;
+
+
+    movementStatusElement.textContent =
+        patient.movement;
+
+
+    consciousnessStatusElement.textContent =
+        patient.consciousness;
+
+
+    bodyRegionElement.textContent =
+        patient.bodyRegion;
+
+
+    latitudeValue.textContent =
+        `${patient.latitude.toFixed(4)}° N`;
+
+
+    longitudeValue.textContent =
+        `${patient.longitude.toFixed(4)}° E`;
+
+
+    priorityBadge.textContent =
+        patient.priority.toUpperCase();
+
+
+    priorityBadge.className =
+        `priority-badge ${patient.priority.toLowerCase()}`;
+
+
+
+    document
+        .querySelectorAll(
+            ".patient-card"
+        )
+        .forEach(
+            card => {
+
+                card.classList.remove(
+                    "selected"
+                );
+
+
+                if (
+                    card.dataset.patientId ===
+                    patientId
+                ) {
+
+                    card.classList.add(
+                        "selected"
+                    );
+
+                }
+
+            }
+        );
+
+
+    addLog(
+        `${patient.id} selected — injury detected on right hand.`
+    );
+
+}
+
+
+
+// ============================================================
+// PATIENT CARDS
+// ============================================================
+
+document
+    .querySelectorAll(
+        ".patient-card"
+    )
+    .forEach(
+        card => {
+
+            card.addEventListener(
+                "click",
+                () => {
+
+                    selectPatient(
+                        card.dataset.patientId
+                    );
+
+                }
+            );
+
+        }
+    );
+
+
+
+// ============================================================
+// CONNECT BUTTON
+// ============================================================
+
+connectBtn.addEventListener(
+    "click",
+    () => {
+
+
+        droneConnected =
+            !droneConnected;
+
+
+        if (droneConnected) {
+
+            connectBtn.textContent =
+                "✓ DRONE READY";
+
+
+            connectBtn.classList.add(
+                "connected"
+            );
+
+
+            addLog(
+                "Drone system ready."
+            );
+
+        }
+
+        else {
+
+            connectBtn.textContent =
+                "◉ CONNECT DRONE";
+
+
+            connectBtn.classList.remove(
+                "connected"
+            );
+
+
+            addLog(
+                "Drone system disconnected."
+            );
+
+        }
+
+    }
+);
+
+
+
+// ============================================================
+// START MISSION
+// ============================================================
+
+startMissionBtn.addEventListener(
+    "click",
+    async () => {
+
+
+        if (missionRunning) {
+            return;
+        }
+
+
+        missionRunning =
+            true;
+
+
+        hidePatientData();
+
+
+        clearTimeout(
+            patientFoundTimer
+        );
+
+
+        currentVideoIndex =
+            0;
+
+
+
+        missionState.textContent =
+            "SCANNING";
+
+
+        cameraStatus.innerHTML = `
+
+            <span></span>
+
+            SCANNING
+
+        `;
+
+
+        hudTopLeft.textContent =
+            "AI DETECTION ACTIVE";
+
+
+        patientsHud.textContent =
+            "SEARCHING FOR PATIENTS";
+
+
+        analysisHud.textContent =
+            "ANALYZING";
+
+
+        addLog(
+            "Mission started — scanning incident area."
+        );
+
+
+
+        cameraStage.classList.add(
+            "video-running"
+        );
+
+
+        missionVideo.classList.add(
+            "active"
+        );
+
+
+        missionVideo.src =
+            missionVideos[currentVideoIndex];
+
+
+        missionVideo.currentTime =
+            0;
+
+
+        missionVideo.load();
+
+
+
+        try {
+
+            await missionVideo.play();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Video playback error:",
+                error
+            );
+
+
+            addLog(
+                "Unable to start drone video."
+            );
+
+
+            missionRunning =
+                false;
+
+
+            return;
+
+        }
+
+
+
+        // ====================================================
+        // AFTER 3 SECONDS → PATIENTS FOUND
+        // ====================================================
+
+        patientFoundTimer =
+            setTimeout(
+                () => {
+
+
+                    if (!missionRunning) {
+                        return;
+                    }
+
+
+                    missionState.textContent =
+                        "PATIENTS FOUND";
+
+
+                    cameraStatus.innerHTML = `
+
+                        <span></span>
+
+                        ANALYSIS ACTIVE
+
+                    `;
+
+
+                    patientsHud.textContent =
+                        "2 PATIENTS DETECTED";
+
+
+                    analysisHud.textContent =
+                        "AI ANALYSIS ACTIVE";
+
+
+
+                    showPatientData();
+
+
+                    selectPatient(
+                        "P-001"
+                    );
+
+
+
+                    addLog(
+                        "2 patients detected in incident area."
+                    );
+
+
+                    addLog(
+                        "Visible injuries detected on the right hand."
+                    );
+
+
+                    addLog(
+                        "Patient information generated."
+                    );
+
+
+                },
+                3000
+            );
+
+    }
+);
+
+
+
+// ============================================================
+// VIDEO FINISHED
+// ============================================================
+
+missionVideo.addEventListener(
+    "ended",
+    async () => {
+
+
+        if (!missionRunning) {
+            return;
+        }
+
+
+        currentVideoIndex++;
+
+
+
+        // ====================================================
+        // PLAY NEXT VIDEO
+        // ====================================================
+
+        if (
+            currentVideoIndex <
+            missionVideos.length
+        ) {
+
+
+            missionVideo.src =
+                missionVideos[currentVideoIndex];
+
+
+            missionVideo.currentTime =
+                0;
+
+
+            missionVideo.load();
+
+
+            addLog(
+                `Continuing incident scan — video ${currentVideoIndex + 1} of ${missionVideos.length}.`
+            );
+
+
+
+            try {
+
+                await missionVideo.play();
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Video playback error:",
+                    error
+                );
+
+
+                addLog(
+                    "Unable to continue drone video."
+                );
+
+            }
+
+
+            return;
+
+        }
+
+
+
+        // ====================================================
+        // ALL VIDEOS FINISHED
+        // ====================================================
+
+        missionRunning =
+            false;
+
+
+        missionState.textContent =
+            "ASSESSMENT COMPLETE";
+
+
+        cameraStatus.innerHTML = `
+
+            <span></span>
+
+            COMPLETE
+
+        `;
+
+
+        patientsHud.textContent =
+            "2 PATIENTS DETECTED";
+
+
+        analysisHud.textContent =
+            "ANALYSIS COMPLETE";
+
+
+        addLog(
+            "Incident video analysis completed."
+        );
+
+    }
+);
+
+
+
+// ============================================================
+// LAND / RETURN
+// ============================================================
+
+landBtn.addEventListener(
+    "click",
+    () => {
+
+
+        missionRunning =
+            false;
+
+
+        clearTimeout(
+            patientFoundTimer
+        );
+
+
+        missionState.textContent =
+            "RETURNING";
+
+
+        missionVideo.pause();
+
+
+        missionVideo.currentTime =
+            0;
+
+
+        missionVideo.classList.remove(
+            "active"
+        );
+
+
+        cameraStage.classList.remove(
+            "video-running"
+        );
+
+
+        hidePatientData();
+
+
+        cameraStatus.innerHTML = `
+
+            <span></span>
+
+            READY
+
+        `;
+
+
+        hudTopLeft.textContent =
+            "AI SYSTEM READY";
+
+
+        patientsHud.textContent =
+            "WAITING FOR SCAN";
+
+
+        analysisHud.textContent =
+            "STANDBY";
+
+
+        addLog(
+            "Return command activated."
+        );
+
+
+        setTimeout(
+            () => {
+
+                if (!missionRunning) {
+
+                    missionState.textContent =
+                        "STANDBY";
+
+                }
+
+            },
+            1200
+        );
+
+    }
+);
+
+
+
+// ============================================================
+// EMERGENCY STOP
+// ============================================================
+
+emergencyBtn.addEventListener(
+    "click",
+    () => {
+
+
+        missionRunning =
+            false;
+
+
+        clearTimeout(
+            patientFoundTimer
+        );
+
+
+        missionVideo.pause();
+
+
+        missionVideo.currentTime =
+            0;
+
+
+        missionVideo.classList.remove(
+            "active"
+        );
+
+
+        cameraStage.classList.remove(
+            "video-running"
+        );
+
+
+        hidePatientData();
+
+
+        missionState.textContent =
+            "EMERGENCY STOP";
+
+
+        cameraStatus.innerHTML = `
+
+            <span></span>
+
+            STOPPED
+
+        `;
+
+
+        patientsHud.textContent =
+            "SCAN STOPPED";
+
+
+        analysisHud.textContent =
+            "STOPPED";
+
+
+        addLog(
+            "Emergency stop activated."
+        );
+
+    }
+);
+
+
+
+// ============================================================
+// CLEAR EVENT LOG
+// ============================================================
+
+clearLogBtn.addEventListener(
+    "click",
+    () => {
+
+
+        eventLog.innerHTML =
+            "";
+
+
+        addLog(
+            "Event log cleared."
+        );
+
+    }
+);
+
+
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+function initializeDashboard() {
+
+
+    hidePatientData();
+
+
+    addLog(
+        "NAJEED emergency response system initialized."
+    );
+
+
+    addLog(
+        "AI vision system ready."
+    );
+
+
+    addLog(
+        "Waiting for mission start."
+    );
+
+}
+
+
+initializeDashboard();
+
+
+</script>
+
+
+</body>
+
+</html>
